@@ -23,7 +23,7 @@ public class ParserUtils {
     }
 
     public Date parserStringToDate(String date){
-        SimpleDateFormat format = new SimpleDateFormat("dd.MM.yy HH:mm");
+        SimpleDateFormat format = new SimpleDateFormat("dd.MM.yyHH:mm");
         try {
             return format.parse(date);
         } catch (ParseException e) {

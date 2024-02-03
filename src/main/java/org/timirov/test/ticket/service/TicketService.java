@@ -1,17 +1,9 @@
 package org.timirov.test.ticket.service;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.timirov.test.ticket.TicketApp;
 import org.timirov.test.ticket.entities.Ticket;
 import org.timirov.test.ticket.entities.Tickets;
 import org.timirov.test.ticket.utils.ParserUtils;
 
-import java.io.*;
-import java.sql.Time;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.time.Duration;
-import java.time.Instant;
 import java.util.*;
 
 public class TicketService {
@@ -31,8 +23,8 @@ public class TicketService {
     public Map<String, Long> getMinimumFlightTimeForeachCarrier(List<Ticket> tickets) {
         Map<String, Long> result = new HashMap<>();
         filterOriginAndDestination(tickets).forEach(ticket -> {
-            Date dateDeparture = parser.parserStringToDate(ticket.getDeparture_date() + " " + ticket.getDeparture_time());
-            Date dateArrival = parser.parserStringToDate(ticket.getArrival_date() + " " + ticket.getArrival_time());
+            Date dateDeparture = parser.parserStringToDate(ticket.getDeparture_date() + ticket.getDeparture_time());
+            Date dateArrival = parser.parserStringToDate(ticket.getArrival_date() + ticket.getArrival_time());
             long flightTime = flightTime(dateDeparture, dateArrival);
             if (result.containsKey(ticket.getCarrier())) {
                 if (result.get(ticket.getCarrier()) > flightTime) {
@@ -54,15 +46,18 @@ public class TicketService {
                 .mapToInt(Ticket::getPrice)
                 .sorted()
                 .toArray();
-        double median;
+        double median = findMedian(prices);
+        return average - median;
+    }
+
+    private double findMedian(int[] prices){
         int index = prices.length / 2;
         if (prices.length % 2 == 0) {
-            double tmp = prices[index - 1] + prices[index];
-            median = tmp / 2;
+            double median = prices[index - 1] + prices[index];
+            return median / 2;
         } else {
-            median = prices[index];
+            return prices[index];
         }
-        return average - median;
     }
 
     private List<Ticket> filterOriginAndDestination(List<Ticket> tickets) {
