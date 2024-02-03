@@ -1,4 +1,5 @@
 package org.timirov.test.ticket.service;
+
 import org.timirov.test.ticket.entities.Ticket;
 import org.timirov.test.ticket.entities.Tickets;
 import org.timirov.test.ticket.utils.ParserUtils;
@@ -13,10 +14,11 @@ public class TicketService {
     public final static String PATH = "/tickets.json";
     private final ParserUtils parser = new ParserUtils();
 
-    public Tickets getTickets(){
+    public Tickets getTickets() {
         return parser.parserJsonFileToTickets(PATH);
     }
-    private long flightTime(Date dateDeparture, Date dateArrival){
+
+    private long flightTime(Date dateDeparture, Date dateArrival) {
         return Duration.between(dateDeparture.toInstant(), dateArrival.toInstant()).toMinutes();
     }
 
@@ -50,7 +52,7 @@ public class TicketService {
         return average - median;
     }
 
-    private double findMedian(int[] prices){
+    private double findMedian(int[] prices) {
         int index = prices.length / 2;
         if (prices.length % 2 == 0) {
             double median = prices[index - 1] + prices[index];
