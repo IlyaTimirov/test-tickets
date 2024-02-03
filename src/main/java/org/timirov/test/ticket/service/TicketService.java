@@ -18,8 +18,12 @@ public class TicketService {
     private final static String ORIGIN_VVO = "VVO";
     private final static String DESTINATION_TLV = "TLV";
 
+    public final static String PATH = "/tickets.json";
     private final ParserUtils parser = new ParserUtils();
 
+    public Tickets getTickets(){
+        return parser.parserJsonFileToTickets(PATH);
+    }
     private long flightTime(Date dateDeparture, Date dateArrival){
         return Duration.between(dateDeparture.toInstant(), dateArrival.toInstant()).toMinutes();
     }

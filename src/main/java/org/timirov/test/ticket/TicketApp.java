@@ -8,12 +8,10 @@ import java.util.Map;
 
 
 public class TicketApp {
-    public final static String PATH = "/tickets.json";
 
     public static void main(String[] args) {
         TicketService ticketService = new TicketService();
-        ParserUtils parser = new ParserUtils();
-        Tickets tickets = parser.parserJsonFileToTickets(PATH);
+        Tickets tickets = ticketService.getTickets();
         double differencePrice = ticketService.differenceBetweenAverageAndMediumPrice(tickets.getTickets());
         Map<String, Long> carriers = ticketService.getMinimumFlightTimeForeachCarrier(tickets.getTickets());
         print(carriers, differencePrice);
