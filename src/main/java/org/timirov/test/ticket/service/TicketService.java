@@ -1,59 +1,69 @@
 package org.timirov.test.ticket.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.timirov.test.ticket.TicketApp;
 import org.timirov.test.ticket.entities.Ticket;
 import org.timirov.test.ticket.entities.Tickets;
+import org.timirov.test.ticket.utils.ParserUtils;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.*;
+import java.sql.Time;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
 
 public class TicketService {
+    private final static String ORIGIN_VVO = "VVO";
+    private final static String DESTINATION_TLV = "TLV";
 
-    public Tickets fileToTickets(File file) {
-        try {
-            return new ObjectMapper().readValue(file, Tickets.class);
-        }catch (FileNotFoundException e){
-            throw new RuntimeException("Файл не найден!");
-        }catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+    private final ParserUtils parser = new ParserUtils();
+
+    private long flightTime(Date dateDeparture, Date dateArrival){
+        return Duration.between(dateDeparture.toInstant(), dateArrival.toInstant()).toMinutes();
     }
 
-    private int parserStringTimeToInteger(String time) {
-        return Integer.parseInt(time.replace(":", ""));
-    }
-
-    public Map<String, Integer> getMinimumFlightTimeForeachAirCarrier(List<Ticket> tickets) {
-        Map<String, Integer> result = new HashMap<>();
-
-        tickets.forEach(ticket -> {
-            int departure = parserStringTimeToInteger(ticket.getDeparture_time());
-            int arrival = parserStringTimeToInteger(ticket.getArrival_time());
-            int difference = arrival - departure;
+    public Map<String, Long> getMinimumFlightTimeForeachCarrier(List<Ticket> tickets) {
+        Map<String, Long> result = new HashMap<>();
+        filterOriginAndDestination(tickets).forEach(ticket -> {
+            Date dateDeparture = parser.parserStringToDate(ticket.getDeparture_date() + " " + ticket.getDeparture_time());
+            Date dateArrival = parser.parserStringToDate(ticket.getArrival_date() + " " + ticket.getArrival_time());
+            long flightTime = flightTime(dateDeparture, dateArrival);
             if (result.containsKey(ticket.getCarrier())) {
-                if (result.get(ticket.getCarrier()) > difference) {
-                    result.put(ticket.getCarrier(), difference);
+                if (result.get(ticket.getCarrier()) > flightTime) {
+                    result.put(ticket.getCarrier(), flightTime);
                 }
-            }else {
-                result.put(ticket.getCarrier(), difference);
+            } else {
+                result.put(ticket.getCarrier(), flightTime);
             }
         });
         return result;
     }
 
     public double differenceBetweenAverageAndMediumPrice(List<Ticket> tickets) {
-        double average = tickets.stream().mapToInt(Ticket::getPrice).average().orElseThrow();
+        double average = filterOriginAndDestination(tickets).stream()
+                .mapToInt(Ticket::getPrice)
+                .average()
+                .orElseThrow();
+        int[] prices = filterOriginAndDestination(tickets).stream()
+                .mapToInt(Ticket::getPrice)
+                .sorted()
+                .toArray();
         double median;
-        int[] prices = tickets.stream().mapToInt(Ticket::getPrice).sorted().toArray();
-        Arrays.sort(prices);
+        int index = prices.length / 2;
         if (prices.length % 2 == 0) {
-            median = (prices[(prices.length - 1) / 2] + prices[(prices.length - 1) / 2 + 1]);
-            median = median / 2;
+            double tmp = prices[index - 1] + prices[index];
+            median = tmp / 2;
         } else {
-            median = prices[(prices.length) / 2];
+            median = prices[index];
         }
         return average - median;
+    }
+
+    private List<Ticket> filterOriginAndDestination(List<Ticket> tickets) {
+        return tickets.stream()
+                .filter(ticket1 -> ticket1.getOrigin().equals(ORIGIN_VVO) && ticket1.getDestination().equals(DESTINATION_TLV))
+                .toList();
     }
 }
